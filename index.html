@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Twitter Trending Topics</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h1 {
+        color: #333;
+      }
+
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        margin: 20px 0;
+        cursor: pointer;
+        background-color: #1da1f2;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+
+      button:hover {
+        background-color: #0d8ddc;
+      }
+
+      #results {
+        width: 100%;
+        max-width: 600px;
+        padding: 10px;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        white-space: pre-wrap;
+        margin-top: 20px;
+      }
+
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      li {
+        margin-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 5px;
+      }
+
+      .footer {
+        margin-top: 20px;
+        font-size: 14px;
+        color: #666;
+      }
+    </style>
+    <script>
+      function runSeleniumScript() {
+        const resultsElement = document.getElementById("results");
+        resultsElement.innerHTML = "Loading...";
+
+        const eventSource = new EventSource("/events");
+
+        eventSource.onmessage = function (event) {
+          const log = document.createElement("div");
+          log.textContent = event.data;
+          resultsElement.appendChild(log);
+        };
+
+        fetch("/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const header = document.createElement("h2");
+            header.innerText = "Trending Topics:";
+            resultsElement.appendChild(header);
+
+            const topicsList = document.createElement("ul");
+
+            data.trendingTopics.forEach((topic) => {
+              const topicItem = document.createElement("li");
+              topicItem.innerText = topic.split("\n")[0];
+              topicsList.appendChild(topicItem);
+            });
+
+            resultsElement.appendChild(topicsList);
+
+            const footer = document.createElement("div");
+            footer.innerText = `These are the most happening topics as of ${new Date(
+              data.endTime
+            ).toLocaleString()}.\nThe IP address used for this query was ${
+              data.ipAddress
+            }`;
+            resultsElement.appendChild(footer);
+          })
+          .catch((error) => {
+            resultsElement.innerText = "Error running Selenium script";
+          })
+          .finally(() => {
+            eventSource.close();
+          });
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Twitter Trending Topics</h1>
+    <button onclick="runSeleniumScript()">Get Trending Topics</button>
+    <div id="results">Results will be displayed here!</div>
+  </body>
+</html>
